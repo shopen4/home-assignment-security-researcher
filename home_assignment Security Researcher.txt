@@ -1,0 +1,69 @@
+Thank you for taking the time and effort.
+
+Before beginning the task, please read through the following short paragraph.
+	
+	The position you are aiming to, in Appdome's research team, is NOT of a researcher per se.
+	Rather, you will be redirected towards research in due time, after proving your ability to
+	learn and develop. It is tough to "catch a break", especially in the research field, but
+	once you're in, this is an amazing place to be.
+
+Alright then, back to business.
+
+Part of being a researcher is getting a task of something you don't really know anything about.
+Think of yourself as a survivor with nothing but your toolkit (C, python or just a can-do attitude).
+You've gone this far, but here lies an obstacle you need to overcome, and it is as follows:
+(note: when using [h] it is a hint to google, or just a direction I think you should follow)
+
+------------------------------
+We work on a mac, where communication between processes can be done in multiple ways.
+Can you explain some methods used for IPC? (give at least 3 examples? pseudo algorithm for how to implement if you want)
+	[h] mach vs bsd
+	[h] shmem
+
+Once you figured out the different methods (and mentioned them of course), I'll pick for you - mach messaging.
+	[h] mach_msg
+
+This method of communication between processes is an exciting feature of xnu, features on macOS, iOS, TvOS, watchOS... 
+	[h] https://www.youtube.com/watch?v=D1jNCy7-g9k
+
+If you watched the youtube link above, I am sure you're now a master at mach IPC, so the final task should be pretty fun:
+
+Design the following Server/Client IPC.
+
+Server:
+	This server has two functionalities
+		- save data sent by another process
+		- send data back to process
+
+	Other requirements:
+		- Visible by other processes
+			[h] bootstrap_check_in
+		- Cannot be blocked by a single client
+		- Communication through mach messaging
+			[h] ports, RECV, SEND
+		- Send/receive data up to 1024 bytes
+
+Client:
+	the client should be able to
+		- find the server
+		- send data to server
+		- receive data back from server
+		- check that the data is the same
+
+
+Couple of notes:
+	I am not expecting your code to be perfect, safe or optimized, but I'd like you to be able to explain what you coded.
+	Other points (kind of a bonus):
+		- When a process dies, what happens to the data stored in server? can we somehow remove it without messaging the server explicitly?
+		- What happens when two 'save' messages are sent, how does the server handle it?
+		- If many processes send the same data, can we optimize it?
+
+Bonus:
+	Write the solution in Objective-C, in a OOP manner.
+------------------------------
+
+
+Last note:
+	- This is not an easy task, but if you manage to complete it (or some of it) you can really say that you have a knack for tackling the unknown
+	- I am aware that you probably don't have a mac, so it is part of the challenge (virtual machine)
+	- Great reference: https://github.com/writeups/iOS/blob/master/iOS%20PDFs/Jonathan%20Levin/Mac%20OS%20X%20and%20iOS%20Internals%20To%20the%20Apples%20Core.pdf
