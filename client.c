@@ -26,6 +26,8 @@ int main(void) {
 	printf("[*] Got special bootstrap port: 0x%x\n", bootstrap_port);
 
 	// Get port to send to the com.echo.macherino.as-a-service and store it in port
+	// Any clients wishing to connect to a given service, can then look up the server port using a similar function: bootstrap_look_up
+	// first argument: always bootstrap; second argument: name of service; third argument: out: server port
 	mach_port_t port;
 	kr = bootstrap_look_up(bootstrap_port, "com.echo.macherino.as-a-service", &port);
 
@@ -49,7 +51,7 @@ int main(void) {
 	msg.header.msgh_size = sizeof(msg);
 
 	strcpy(msg.body_str, "test message");
-
+	// Mach messages are sent and received with the same API function, mach_msg()
 	mach_msg_return_t ret = mach_msg(
 		(mach_msg_header_t *)&msg,
 		MACH_SEND_MSG,

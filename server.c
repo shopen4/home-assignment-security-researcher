@@ -16,13 +16,11 @@ mach_msg_return_t receive_msg(mach_port_name_t);
 int main(void) {
 	int kr;
     // The mach_task_self system call returns the calling thread's task port.
-    // mach_task_self has an effect equivalent to receiving a send right for the task port.
+    
 	mach_port_t task = mach_task_self();
     
-    // The mach_port_allocate function creates a new right in the specified task. 
-    // The mach_port_allocate parameters are task, right and name
-    // task parameter is the task acquiring the port right
-    // right is the kind of entity to be created. name is the task's name for the port right.
+    // The mach_port_allocate parameters are task, right and name; task parameter is the task acquiring the port right
+    // right parameter is the kind of entity to be created. name parameter is the task's name for the port right.
 	mach_port_name_t recv_port;
 	kr = mach_port_allocate(task, MACH_PORT_RIGHT_RECEIVE, &recv_port);
 
@@ -32,6 +30,7 @@ int main(void) {
 	printf("[*] Created port with MACH_PORT_RIGHT_RECEIVE: 0x%x\n", recv_port);
 
     // The mach_port_insert_right function inserts into task the caller's right for a port, using a specified name for the right in the target task
+	// Adding send right to the port
 	kr = mach_port_insert_right(task, recv_port, recv_port, MACH_MSG_TYPE_MAKE_SEND);
 
 	if (kr != KERN_SUCCESS)
@@ -39,6 +38,7 @@ int main(void) {
 
 	printf("[*] Added send right to the port\n");
 
+	// This server is accessible to all processes on the system, which may communicate with it over a given port — the bootstrap_port
 	mach_port_t bootstrap_port;
 	kr = task_get_special_port(task, TASK_BOOTSTRAP_PORT, &bootstrap_port);
 
@@ -46,7 +46,7 @@ int main(void) {
 
 	if (kr != KERN_SUCCESS)
 		return EXIT_FAILURE;
-
+	// the server is visible by other processes
 	kr = bootstrap_check_in(bootstrap_port, "com.echo.macherino.as-a-service", &recv_port);
 
 	if (kr != KERN_SUCCESS)
@@ -62,12 +62,12 @@ int main(void) {
 
 mach_msg_return_t receive_msg(mach_port_name_t recv_port) {
 	message msg = {0};
-
+	// Mach messages are sent and received with the same API function, mach_msg()
 	mach_msg_return_t ret = mach_msg(
 		(mach_msg_header_t *)&msg,
 		MACH_RCV_MSG,
 		0,
-		sizeof(msg),
+		1024 * BYTE_SIZE,
 		recv_port,
 		MACH_MSG_TIMEOUT_NONE,
 		MACH_PORT_NULL);
