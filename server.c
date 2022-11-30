@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <mach/mach.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct
 {
@@ -59,6 +61,7 @@ int main(void)
 
 	while (true)
 	{
+
 		message receiveMessage = {0};
 		mach_msg_return_t ret = receive_msg(recvPort, &receiveMessage);
 		if (ret != MACH_MSG_SUCCESS)
@@ -94,7 +97,7 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 
 	response.header.msgh_remote_port = port;
 	response.header.msgh_id = 2;
-	
+
 	strcpy(response.body_str, "test message");
 	response.header.msgh_size = sizeof(response);
 
@@ -106,13 +109,13 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 		/* recv_name */ MACH_PORT_NULL,
 		/* timeout */ MACH_MSG_TIMEOUT_NONE,
 		/* notify port */ MACH_PORT_NULL);
-	
 
 	return ret;
 }
 
 mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 {
+	
 	message msg = {0};
 	// Mach messages are sent and received with the same API function, mach_msg()
 	mach_msg_return_t ret = mach_msg(
@@ -126,7 +129,21 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 
 	if (ret != MACH_MSG_SUCCESS)
 		return ret;
+	
+	FILE *fp;
 
+	fp = fopen("storedData.txt", "a+");
+	if (fp == NULL)
+	{
+		printf("cannot create a file\n");
+	}
+	else
+	{
+		fputs(msg.body_str, fp);
+		fputs("\n", fp);
+	}
+
+	fclose(fp);
 
 	(inMessage->header).msgh_bits = msg.header.msgh_bits;
 	(inMessage->header).msgh_remote_port = msg.header.msgh_remote_port;
