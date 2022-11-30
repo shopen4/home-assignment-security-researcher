@@ -6,12 +6,18 @@
 #include <string.h>
 #include <unistd.h>
 
-typedef struct {
+#define MS_IN_S 1000
+
+mach_msg_return_t receive_msg(mach_port_name_t, mach_msg_timeout_t);
+
+typedef struct
+{
 	mach_msg_header_t header;
 	char body_str[32];
 } message;
 
-int main(void) {
+int main(const int argc, char **argv)
+{
 	int kr;
 	mach_port_name_t task = mach_task_self();
 
@@ -19,8 +25,9 @@ int main(void) {
 	mach_port_t bootstrap_port;
 	kr = task_get_special_port(task, TASK_BOOTSTRAP_PORT, &bootstrap_port);
 
-	if (kr != KERN_SUCCESS) {
-		return -1;
+	if (kr != KERN_SUCCESS)
+	{
+		return EXIT_FAILURE;
 	}
 
 	printf("[*] Got special bootstrap port: 0x%x\n", bootstrap_port);
@@ -31,35 +38,96 @@ int main(void) {
 	mach_port_t port;
 	kr = bootstrap_look_up(bootstrap_port, "com.echo.macherino.as-a-service", &port);
 
-	if (kr != KERN_SUCCESS) {
-		return -2;
+	if (kr != KERN_SUCCESS)
+	{
+		return EXIT_FAILURE;
 	}
 
 	printf("[*] Port for com.echo.macherino.as-a-service: 0x%x\n", port);
 
+	mach_port_t replyPort;
+	if (mach_port_allocate(task, MACH_PORT_RIGHT_RECEIVE, &replyPort) !=
+		KERN_SUCCESS)
+	{
+		return EXIT_FAILURE;
+	}
+
+	if (mach_port_insert_right(
+			task, replyPort, replyPort, MACH_MSG_TYPE_MAKE_SEND) !=
+		KERN_SUCCESS)
+	{
+		return EXIT_FAILURE;
+	}
+
 	// Create the message for sending
 	message msg = {0};
 	msg.header.msgh_remote_port = port;
+	msg.header.msgh_local_port = replyPort;
 
-    // MACH_MSG_TYPE_COPY_SEND: The message will carry a send right, and the caller should supply a send right. 
+	// MACH_MSG_TYPE_COPY_SEND: The message will carry a send right, and the caller should supply a send right.
 	msg.header.msgh_bits = MACH_MSGH_BITS_SET(
-		MACH_MSG_TYPE_COPY_SEND,
-		0,
-		0,
-		0);
+		/* remote */ MACH_MSG_TYPE_COPY_SEND,
+		/* local */ MACH_MSG_TYPE_MAKE_SEND_ONCE,
+		/* voucher */ 0,
+		/* other */ 0);
 	msg.header.msgh_id = 4;
 	msg.header.msgh_size = sizeof(msg);
 
 	strcpy(msg.body_str, "test message");
+
 	// Mach messages are sent and received with the same API function, mach_msg()
 	mach_msg_return_t ret = mach_msg(
-		(mach_msg_header_t *)&msg,
-		MACH_SEND_MSG,
-		sizeof(msg),
-		0,
-		MACH_PORT_NULL,
-		MACH_MSG_TIMEOUT_NONE,
-		MACH_PORT_NULL);
+		/* msg */ (mach_msg_header_t *)&msg,
+		/* option */ MACH_SEND_MSG,
+		/* send size */ sizeof(msg),
+		/* recv size */ 0,
+		/* recv_name */ MACH_PORT_NULL,
+		/* timeout */ MACH_MSG_TIMEOUT_NONE,
+		/* notify port */ MACH_PORT_NULL);
+
+	while (ret == MACH_MSG_SUCCESS)
+	{
+		ret = receive_msg(replyPort, /* timeout */ 1 * MS_IN_S);
 		
+	}
+
+	if (ret == MACH_RCV_TIMED_OUT)
+	{
+		printf("Receive timed out, no more messages from alice yet.\n");
+	}
+	else if (ret != MACH_MSG_SUCCESS)
+	{
+		printf("Failed to receive a message: %#x\n", ret);
+		return 1;
+	}
+
+	return ret;
+}
+
+mach_msg_return_t receive_msg(
+	mach_port_name_t recvPort,
+	mach_msg_timeout_t timeout)
+{
+	// Message buffer.
+	message receiveMessage = {0};
+
+	mach_msg_return_t ret = mach_msg(
+		/* msg */ (mach_msg_header_t *)&receiveMessage,
+		/* option */ MACH_RCV_MSG | MACH_RCV_TIMEOUT,
+		/* send size */ 0,
+		/* recv size */ 1024 * BYTE_SIZE,
+		/* recv_name */ recvPort,
+		/* timeout */ timeout,
+		/* notify port */ MACH_PORT_NULL);
+
+	if (ret != MACH_MSG_SUCCESS)
+	{
+		return ret;	
+	}
+
+	printf("got message\n");
+	printf("\tid: %d\n", receiveMessage.header.msgh_id);
+	printf("\tbodys: %s\n", receiveMessage.body_str);
+
 	return ret;
 }
