@@ -115,11 +115,9 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 
 mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 {
-	
-	message msg = {0};
-	// Mach messages are sent and received with the same API function, mach_msg()
+
 	mach_msg_return_t ret = mach_msg(
-		(mach_msg_header_t *)&msg,
+		(mach_msg_header_t *)inMessage,
 		MACH_RCV_MSG,
 		0,
 		1024 * BYTE_SIZE,
@@ -129,7 +127,7 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 
 	if (ret != MACH_MSG_SUCCESS)
 		return ret;
-	
+
 	FILE *fp;
 
 	fp = fopen("storedData.txt", "a+");
@@ -139,19 +137,17 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 	}
 	else
 	{
-		fputs(msg.body_str, fp);
+		fputs(inMessage->body_str, fp);
 		fputs("\n", fp);
 	}
 
 	fclose(fp);
 
-	(inMessage->header).msgh_bits = msg.header.msgh_bits;
-	(inMessage->header).msgh_remote_port = msg.header.msgh_remote_port;
-	strcpy((inMessage->body_str), msg.body_str);
+	
 
 	printf("got message!\n");
-	printf("\tid: %d\n", msg.header.msgh_id);
-	printf("\tbodys: %s\n", msg.body_str);
+	printf("\tid: %d\n", inMessage->header.msgh_id);
+	printf("\tbodys: %s\n", inMessage->body_str);
 
 	return MACH_MSG_SUCCESS;
 }
