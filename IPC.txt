@@ -2,7 +2,7 @@
 2. Shared Memory: is a implementation for IPC where a memory section is shared between different processes.In other words process A writes to this memory and B can read from this memory, or vice verse. This is fast and data doesn’t have to be copied around. The downside is that it’s really difficult to coordinate changes to the shared memory area.
 3. Sockets: While most TCP/IP connections are established over a network between two different machines, it is also possible to connect two processes running on the same machine without ever touching a network using TCP/IP.
 
-When a process dies the data is not removed.
+When a process dies the data is not removed. we can store key/value pairs, the key will be the PID and the value is the data. now we can detect if a process dies by searching its PID in the list of all live processes (ps aux). 
 When two 'save' messages are sent the server append these two messages in storedData file.
 Yes, we can optimize it by searching: if the data does not exists, then store the data. else, do not store the data. 
 
