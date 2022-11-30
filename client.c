@@ -8,7 +8,7 @@
 
 #define MS_IN_S 1000
 
-mach_msg_return_t receive_msg(mach_port_name_t, mach_msg_timeout_t);
+mach_msg_return_t receive_msg(mach_port_name_t, mach_msg_timeout_t, char* data);
 
 typedef struct
 {
@@ -87,7 +87,7 @@ int main(const int argc, char **argv)
 
 	while (ret == MACH_MSG_SUCCESS)
 	{
-		ret = receive_msg(replyPort, /* timeout */ 1 * MS_IN_S);
+		ret = receive_msg(replyPort, /* timeout */ 1 * MS_IN_S, msg.body_str);
 		
 	}
 
@@ -106,7 +106,8 @@ int main(const int argc, char **argv)
 
 mach_msg_return_t receive_msg(
 	mach_port_name_t recvPort,
-	mach_msg_timeout_t timeout)
+	mach_msg_timeout_t timeout,
+	char* sentMessage)
 {
 	// Message buffer.
 	message receiveMessage = {0};
@@ -125,9 +126,15 @@ mach_msg_return_t receive_msg(
 		return ret;	
 	}
 
-	printf("got message\n");
+	printf("got response message!\n");
 	printf("\tid: %d\n", receiveMessage.header.msgh_id);
 	printf("\tbodys: %s\n", receiveMessage.body_str);
+	if (strcmp(receiveMessage.body_str, sentMessage) == 0) {
+		printf("\t The data is the same\n");
+	} else {
+		printf("\t The data is NOT the same\n");
+	}
 
 	return ret;
+	
 }

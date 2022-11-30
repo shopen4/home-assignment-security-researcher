@@ -95,7 +95,7 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 	response.header.msgh_remote_port = port;
 	response.header.msgh_id = 2;
 	
-	strcpy(response.body_str, ":::::::");
+	strcpy(response.body_str, "test message");
 	response.header.msgh_size = sizeof(response);
 
 	mach_msg_return_t ret = mach_msg(
@@ -132,7 +132,7 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 	(inMessage->header).msgh_remote_port = msg.header.msgh_remote_port;
 	strcpy((inMessage->body_str), msg.body_str);
 
-	printf("got message\n");
+	printf("got message!\n");
 	printf("\tid: %d\n", msg.header.msgh_id);
 	printf("\tbodys: %s\n", msg.body_str);
 
