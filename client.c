@@ -129,8 +129,10 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, mach_msg_timeout_t time
 	}
 
 	printf("got response message!\n");
-	printf("\tid: %d\n", receiveMessage.message.header.msgh_id);
-	printf("\tbodys: %s\n", receiveMessage.message.body_str);
+	printf("\t id: %d\n", receiveMessage.message.header.msgh_id);
+	printf("\t bodys: %s\n", receiveMessage.message.body_str);
+
+
 	if (strcmp(receiveMessage.message.body_str, data_sent_to_server) == 0) {
 		printf("\t The data is the same\n");
 	} else {

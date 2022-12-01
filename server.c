@@ -104,7 +104,7 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 	response.header.msgh_id = 1;
 	response.header.msgh_size = sizeof(response);
 
-	strcpy(response.body_str, "Response : ");
+	strcpy(response.body_str, inMessage->body_str);
 
 	mach_msg_return_t ret = mach_msg(
 		/* msg */ (mach_msg_header_t *)&response,
@@ -115,9 +115,6 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 		/* timeout */ MACH_MSG_TIMEOUT_NONE,
 		/* notify port */ MACH_PORT_NULL);
 
-
-	// printf("printing: %lu\n", sizeof(response));
-
 	return ret;
 }
 
@@ -125,13 +122,13 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, ReceiveMessage *inMessa
 {
 
 	mach_msg_return_t ret = mach_msg(
-		(mach_msg_header_t *)inMessage,
-		MACH_RCV_MSG,
-		0,
-		sizeof(*inMessage),
-		recvPort,
-		MACH_MSG_TIMEOUT_NONE,
-		MACH_PORT_NULL);
+		/* msg */ (mach_msg_header_t *)inMessage,
+		/* option */ MACH_RCV_MSG,
+		/* send size */ 0,
+		/* recv size */ sizeof(*inMessage),
+		/* recv_name */ recvPort,
+		/* timeout */ MACH_MSG_TIMEOUT_NONE,
+		/* notify port */ MACH_PORT_NULL);
 
 	if (ret != MACH_MSG_SUCCESS)
 		return ret;
@@ -152,8 +149,8 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, ReceiveMessage *inMessa
 	fclose(fp);
 
 	printf("got message!\n");
-	printf("\tid: %d\n", inMessage->message.header.msgh_id);
-	printf("\tbodys: %s\n", inMessage->message.body_str);
+	printf("\t id: %d\n", inMessage->message.header.msgh_id);
+	printf("\t bodys: %s\n", inMessage->message.body_str);
 
 	return MACH_MSG_SUCCESS;
 }
