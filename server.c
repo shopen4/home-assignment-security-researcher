@@ -97,9 +97,10 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 
 	response.header.msgh_remote_port = port;
 	response.header.msgh_id = 2;
-
-	strcpy(response.body_str, "test message");
 	response.header.msgh_size = sizeof(response);
+
+	strcpy(response.body_str, "Response : ");
+	
 
 	mach_msg_return_t ret = mach_msg(
 		/* msg */ (mach_msg_header_t *)&response,
