@@ -8,13 +8,19 @@
 
 #define MS_IN_S 1000
 
-mach_msg_return_t receive_msg(mach_port_name_t, mach_msg_timeout_t, char* data);
+mach_msg_return_t receive_msg(mach_port_name_t, mach_msg_timeout_t, char *data);
 
 typedef struct
 {
 	mach_msg_header_t header;
 	char body_str[32];
 } message;
+
+typedef struct
+{
+	message message;
+	mach_msg_trailer_t trailer;
+} ReceiveMessage;
 
 int main(const int argc, char **argv)
 {
@@ -73,7 +79,7 @@ int main(const int argc, char **argv)
 	msg.header.msgh_id = 4;
 	msg.header.msgh_size = sizeof(msg);
 
-	strcpy(msg.body_str, "test message");
+	strcpy(msg.body_str, "test message::::: ");
 
 	// Mach messages are sent and received with the same API function, mach_msg()
 	mach_msg_return_t ret = mach_msg(
@@ -88,12 +94,11 @@ int main(const int argc, char **argv)
 	while (ret == MACH_MSG_SUCCESS)
 	{
 		ret = receive_msg(replyPort, /* timeout */ 1 * MS_IN_S, msg.body_str);
-		
 	}
 
 	if (ret == MACH_RCV_TIMED_OUT)
 	{
-		printf("Receive timed out, no more messages from alice yet.\n");
+		printf("Receive timed out, no more messages from server.\n");
 	}
 	else if (ret != MACH_MSG_SUCCESS)
 	{
@@ -104,37 +109,33 @@ int main(const int argc, char **argv)
 	return ret;
 }
 
-mach_msg_return_t receive_msg(
-	mach_port_name_t recvPort,
-	mach_msg_timeout_t timeout,
-	char* sentMessage)
+mach_msg_return_t receive_msg(mach_port_name_t recvPort, mach_msg_timeout_t timeout, char *data_sent_to_server)
 {
 	// Message buffer.
-	message receiveMessage = {0};
+	ReceiveMessage receiveMessage = {0};
 
 	mach_msg_return_t ret = mach_msg(
 		/* msg */ (mach_msg_header_t *)&receiveMessage,
 		/* option */ MACH_RCV_MSG | MACH_RCV_TIMEOUT,
 		/* send size */ 0,
-		/* recv size */ 1024 * BYTE_SIZE,
+		/* recv size */ sizeof(receiveMessage),
 		/* recv_name */ recvPort,
 		/* timeout */ timeout,
 		/* notify port */ MACH_PORT_NULL);
 
 	if (ret != MACH_MSG_SUCCESS)
 	{
-		return ret;	
+		return ret;
 	}
 
 	printf("got response message!\n");
-	printf("\tid: %d\n", receiveMessage.header.msgh_id);
-	printf("\tbodys: %s\n", receiveMessage.body_str);
-	if (strcmp(receiveMessage.body_str, sentMessage) == 0) {
+	printf("\tid: %d\n", receiveMessage.message.header.msgh_id);
+	printf("\tbodys: %s\n", receiveMessage.message.body_str);
+	if (strcmp(receiveMessage.message.body_str, data_sent_to_server) == 0) {
 		printf("\t The data is the same\n");
 	} else {
 		printf("\t The data is NOT the same\n");
 	}
 
 	return ret;
-	
 }

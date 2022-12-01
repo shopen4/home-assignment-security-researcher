@@ -11,10 +11,15 @@ typedef struct
 {
 	mach_msg_header_t header;
 	char body_str[32];
-	mach_msg_trailer_t trailer;
 } message;
 
-mach_msg_return_t receive_msg(mach_port_name_t, message *inMessage);
+typedef struct
+{
+	message message;
+	mach_msg_trailer_t trailer;
+} ReceiveMessage;
+
+mach_msg_return_t receive_msg(mach_port_name_t, ReceiveMessage *inMessage);
 mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage);
 
 int main(void)
@@ -62,7 +67,7 @@ int main(void)
 	while (true)
 	{
 
-		message receiveMessage = {0};
+		ReceiveMessage receiveMessage = {0};
 		mach_msg_return_t ret = receive_msg(recvPort, &receiveMessage);
 		if (ret != MACH_MSG_SUCCESS)
 		{
@@ -71,14 +76,14 @@ int main(void)
 		}
 
 		// Continue if there's no reply port.
-		if (receiveMessage.header.msgh_remote_port == MACH_PORT_NULL)
+		if (receiveMessage.message.header.msgh_remote_port == MACH_PORT_NULL)
 		{
 			continue;
 		}
 
 		ret = send_reply(
-			receiveMessage.header.msgh_remote_port,
-			&receiveMessage);
+			receiveMessage.message.header.msgh_remote_port,
+			&receiveMessage.message);
 
 		if (ret != MACH_MSG_SUCCESS)
 		{
@@ -96,11 +101,10 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 		MACH_MSGH_BITS_REMOTE_MASK;
 
 	response.header.msgh_remote_port = port;
-	response.header.msgh_id = 2;
+	response.header.msgh_id = 1;
 	response.header.msgh_size = sizeof(response);
 
 	strcpy(response.body_str, "Response : ");
-	
 
 	mach_msg_return_t ret = mach_msg(
 		/* msg */ (mach_msg_header_t *)&response,
@@ -111,17 +115,20 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 		/* timeout */ MACH_MSG_TIMEOUT_NONE,
 		/* notify port */ MACH_PORT_NULL);
 
+
+	// printf("printing: %lu\n", sizeof(response));
+
 	return ret;
 }
 
-mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
+mach_msg_return_t receive_msg(mach_port_name_t recvPort, ReceiveMessage *inMessage)
 {
 
 	mach_msg_return_t ret = mach_msg(
 		(mach_msg_header_t *)inMessage,
 		MACH_RCV_MSG,
 		0,
-		1024 * BYTE_SIZE,
+		sizeof(*inMessage),
 		recvPort,
 		MACH_MSG_TIMEOUT_NONE,
 		MACH_PORT_NULL);
@@ -138,17 +145,15 @@ mach_msg_return_t receive_msg(mach_port_name_t recvPort, message *inMessage)
 	}
 	else
 	{
-		fputs(inMessage->body_str, fp);
+		fputs(inMessage->message.body_str, fp);
 		fputs("\n", fp);
 	}
 
 	fclose(fp);
 
-	
-
 	printf("got message!\n");
-	printf("\tid: %d\n", inMessage->header.msgh_id);
-	printf("\tbodys: %s\n", inMessage->body_str);
+	printf("\tid: %d\n", inMessage->message.header.msgh_id);
+	printf("\tbodys: %s\n", inMessage->message.body_str);
 
 	return MACH_MSG_SUCCESS;
 }
