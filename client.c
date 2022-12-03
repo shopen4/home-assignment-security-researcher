@@ -13,7 +13,7 @@ mach_msg_return_t receive_msg(mach_port_name_t, mach_msg_timeout_t, char *data);
 typedef struct
 {
 	mach_msg_header_t header;
-	char body_str[32];
+	char body_str[1024];
 } message;
 
 typedef struct
@@ -79,7 +79,7 @@ int main(const int argc, char **argv)
 	msg.header.msgh_id = 4;
 	msg.header.msgh_size = sizeof(msg);
 
-	strcpy(msg.body_str, "test message::::: ");
+	strcpy(msg.body_str, "test");
 
 	// Mach messages are sent and received with the same API function, mach_msg()
 	mach_msg_return_t ret = mach_msg(

@@ -10,7 +10,7 @@
 typedef struct
 {
 	mach_msg_header_t header;
-	char body_str[32];
+	char body_str[1024];
 } message;
 
 typedef struct
@@ -104,7 +104,7 @@ mach_msg_return_t send_reply(mach_port_name_t port, const message *inMessage)
 	response.header.msgh_id = 1;
 	response.header.msgh_size = sizeof(response);
 
-	strcpy(response.body_str, inMessage->body_str);
+	strcpy(response.body_str, "aa");
 
 	mach_msg_return_t ret = mach_msg(
 		/* msg */ (mach_msg_header_t *)&response,
