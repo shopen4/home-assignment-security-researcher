@@ -71,6 +71,11 @@ int main(void)
 		mach_msg_return_t ret = receive_msg(recvPort, &receiveMessage);
 		if (ret != MACH_MSG_SUCCESS)
 		{
+			if (ret == MACH_RCV_TOO_LARGE)
+			{
+				printf("Failed to receive a message because the message size is more than 1024 bytes:  %#x\n", ret);
+				continue;
+			}
 			printf("Failed to receive a message: %#x\n", ret);
 			continue;
 		}
