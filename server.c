@@ -57,7 +57,6 @@ int main(void)
 	if (kr != KERN_SUCCESS)
 		return EXIT_FAILURE;
 	// the server is visible by other processes
-	// kr = bootstrap_check_in(bootstrap_port, "com.echo.macherino.as-a-service", &recvPort);
 	kr = bootstrap_check_in(bootstrap_port, "com.nir.ipc.mach", &recvPort);
 
 	if (kr != KERN_SUCCESS)
