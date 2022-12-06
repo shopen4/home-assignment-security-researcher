@@ -42,14 +42,14 @@ int main(const int argc, char **argv)
 	// Any clients wishing to connect to a given service, can then look up the server port using a similar function: bootstrap_look_up
 	// first argument: always bootstrap; second argument: name of service; third argument: out: server port
 	mach_port_t port;
-	kr = bootstrap_look_up(bootstrap_port, "com.echo.macherino.as-a-service", &port);
+	kr = bootstrap_look_up(bootstrap_port, "com.nir.ipc.mach", &port);
 
 	if (kr != KERN_SUCCESS)
 	{
 		return EXIT_FAILURE;
 	}
 
-	printf("[*] Port for com.echo.macherino.as-a-service: 0x%x\n", port);
+	printf("[*] Port for com.nir.ipc.mach: 0x%x\n", port);
 
 	mach_port_t replyPort;
 	if (mach_port_allocate(task, MACH_PORT_RIGHT_RECEIVE, &replyPort) !=
